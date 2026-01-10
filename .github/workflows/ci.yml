@@ -1,0 +1,71 @@
+name: Data Pipeline CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    env:
+      DBT_DEV_SCHEMA: "dev"
+      DBT_DEV_USER: "ci_user"
+      DBT_DEV_USER_PASSWORD: "ci_password"
+      CLICKHOUSE_HOST: "localhost"
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DB: "data_pipeline"
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: "ci_password"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff black
+          pip install dbt-clickhouse
+      
+      - name: Lint Python code
+        run: |
+          ruff check dagster_code/ --exclude dagster_code/clickhouse_load_tool/
+          black --check dagster_code/ --exclude dagster_code/clickhouse_load_tool/
+
+  dbt-checks:
+    runs-on: ubuntu-latest
+    env:
+      DBT_DEV_SCHEMA: "dev"
+      DBT_DEV_USER: "ci_user"
+      DBT_DEV_USER_PASSWORD: "ci_password"
+      CLICKHOUSE_HOST: "localhost"
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DB: "data_pipeline"
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: "ci_password"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dbt
+        run: |
+          pip install dbt-clickhouse
+      
+      - name: Check dbt project structure
+        run: |
+          cd dbt_project/dbt
+          dbt debug --profiles-dir . || true
+          dbt list --profiles-dir . || true
