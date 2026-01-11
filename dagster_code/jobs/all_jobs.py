@@ -31,9 +31,7 @@ transactions_job = define_asset_job(
 
 savings_plan_job = define_asset_job(
     name="savings_plan_job",
-    selection=build_dbt_asset_selection(
-        [dbt_models], dbt_select="+dim_savings_plan"
-    ),
+    selection=build_dbt_asset_selection([dbt_models], dbt_select="+dim_savings_plan"),
     description="Runs savings_plan mart and all its upstream dependencies",
 )
 
